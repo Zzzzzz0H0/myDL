@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="origin" />
+    <meta property="og:description" content="1，原理 在图像的仿射变换中，很多地方需要用到插值运算，常见的插值运算包括最邻近插值，双线性插值，双三次插值，兰索思插值等方法，OpenCV提供了很多方法，其中，双线性插值由于折中的插值效果和运算速度" />
+    <meta http-equiv="Cache-Control" content="no-transform" />
+    <meta http-equiv="Cache-Control" content="no-siteapp" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>OpenCV ——双线性插值（Bilinear interpolation） - Mr.Easy - 博客园</title>
+    
+    <link rel="stylesheet" href="/css/blog-common.min.css?v=PyyhYDRKBG1sYtpoHme_xHO5AMd5iN57I45iBKF8FVY" />
+    <link id="MainCss" rel="stylesheet" href="/skins/simplememory/bundle-simplememory.min.css?v=h-hNL0OecmJJJBSDulvE8iy08VWrYSL9CnbTmAQnC3Q" />
+    
+    <link id="mobile-style" media="only screen and (max-width: 767px)" type="text/css" rel="stylesheet" href="/skins/SimpleMemory/bundle-SimpleMemory-mobile.min.css" />
+    
+    <link type="application/rss+xml" rel="alternate" href="https://www.cnblogs.com/yssongest/rss" />
+    <link type="application/rsd+xml" rel="EditURI" href="https://www.cnblogs.com/yssongest/rsd.xml" />
+    <link type="application/wlwmanifest+xml" rel="wlwmanifest" href="https://www.cnblogs.com/yssongest/wlwmanifest.xml" />
+    <script src="https://common.cnblogs.com/scripts/jquery-2.2.0.min.js"></script>
+    <script src="/js/blog-common.min.js?v=F-Iy-_Lj7VcUKRIvNkS6UZ5LItMqjh1_L0VZk9Yxfb8"></script>
+    <script>
+        var currentBlogId = 167706;
+        var currentBlogApp = 'yssongest';
+        var cb_enable_mathjax = false;
+        var isLogined = false;
+    </script>
+    
+    
+    
+</head>
+<body>
+    <a name="top"></a>
+    
+    
+<!--done-->
+<div id="home">
+<div id="header">
+	<div id="blogTitle">
+        <a id="lnkBlogLogo" href="https://www.cnblogs.com/yssongest/"><img id="blogLogo" src="/skins/custom/images/logo.gif" alt="返回主页" /></a>		
+		
+<!--done-->
+<h1><a id="Header1_HeaderTitle" class="headermaintitle HeaderMainTitle" href="https://www.cnblogs.com/yssongest/">Mr. Easy</a>
+</h1>
+<h2>
+
+</h2>
+
+
+
+
+		
+	</div><!--end: blogTitle 博客的标题和副标题 -->
+	<div id="navigator">
+		
+<ul id="navList">
+<li><a id="blog_nav_sitehome" class="menu" href="https://www.cnblogs.com/">
+博客园</a>
+</li>
+<li>
+<a id="blog_nav_myhome" class="menu" href="https://www.cnblogs.com/yssongest/">
+首页</a>
+</li>
+<li>
+
+<a id="blog_nav_newpost" class="menu" href="https://i.cnblogs.com/EditPosts.aspx?opt=1">
+新随笔</a>
+</li>
+<li>
+<a id="blog_nav_contact" class="menu" href="https://msg.cnblogs.com/send/Mr.Easy">
+联系</a></li>
+<li>
+<a id="blog_nav_rss" class="menu" href="https://www.cnblogs.com/yssongest/rss/">
+订阅</a>
+<!--<partial name="./Shared/_XmlLink.cshtml" model="Model" /></li>--></li>
+<li>
+<a id="blog_nav_admin" class="menu" href="https://i.cnblogs.com/">
+管理</a>
+</li>
+</ul>
+
+
+		<div class="blogStats">
+			
+			<span id="stats_post_count">随笔 - 
+38&nbsp; </span>
+<span id="stats_article_count">文章 - 
+0&nbsp; </span>
+<span id="stats-comment_count">评论 - 
+7</span>
+
+			
+		</div><!--end: blogStats -->
+	</div><!--end: navigator 博客导航栏 -->
+</div><!--end: header 头部 -->
+
+<div id="main">
+	<div id="mainContent">
+	<div class="forFlow">
+		<div id="post_detail">
+    <!--done-->
+    <div id="topics">
+        <div class="post">
+            <h1 class = "postTitle">
+                
+<a id="cb_post_title_url" class="postTitle2" href="https://www.cnblogs.com/yssongest/p/5303151.html">OpenCV ——双线性插值（Bilinear interpolation）</a>
+
+            </h1>
+            <div class="clear"></div>
+            <div class="postBody">
+                
+<div id="cnblogs_post_body" class="blogpost-body ">
+    <p><br /><strong><span style="font-size: 16px;">1，原理</span></strong><br />　　在图像的仿射变换中，很多地方需要用到插值运算，常见的插值运算包括最邻近插值，双线性插值，双三次插值，兰索思插值等方法，OpenCV提供了很多方法，其中，双线性插值由于折中的插值效果和运算速度，运用比较广泛。<br />　　越是简单的模型越适合用来举例子，我们就举个简单的图像：3*3 的256级灰度图。假如图像的象素矩阵如下图所示（这个原始图把它叫做源图，Source）：<br />&nbsp; &nbsp; &nbsp; &nbsp;234   38    22<br />&nbsp; &nbsp; &nbsp; &nbsp;67    44    12<br />&nbsp; &nbsp; &nbsp; &nbsp;89    65    63<br />　　这	个矩阵中，元素坐标(x,y)是这样确定的，x从左到右，从0开始，y从上到下，也是从零开始，这是图象处理中最常用的坐标系。<br />　　如果想把这副图放大为 4*4大小的图像，那么该怎么做呢？那么第一步肯定想到的是先把4*4的矩阵先画出来再说，好了矩阵画出来了，如下所示，当然，矩阵的每个像素都是未知数，等待着我们去填充（这个将要被填充的图的叫做目标图,Destination）：<br />　　?        ?        ?       ?<br />　　?        ?        ?       ?<br />　　?        ?        ?       ?<br />　　?        ?        ?       ? <br />　　然后要往这个空的矩阵里面填值了，要填的值从哪里来来呢？是从源图中来，好，先填写目标图最左上角的象素，坐标为（0，0），那么该坐标对应源图中的坐标可以由如下公式得出srcX=dstX* (srcWidth/dstWidth) , srcY = dstY * (srcHeight/dstHeight)<br />　　好了，套用公式，就可以找到对应的原图的坐标了(0*(3/4),0*(3/4))=&gt;(0*0.75,0*0.75)=&gt;(0,0)，找到了源图的对应坐标,就可以把源图中坐标为(0,0)处的234象素值填进去目标图的(0,0)这个位置了。<br />　　接下来,如法炮制,寻找目标图中坐标为(1,0)的象素对应源图中的坐标,套用公式:<br />(1*0.75,0*0.75)=&gt;(0.75,0) 结果发现,得到的坐标里面竟然有小数,这可怎么办?计算机里的图像可是数字图像,象素就是最小单位了,象素的坐标都是整数,从来没有小数坐标。这时候采用的一种策略就是采用四舍五入的方法（也可以采用直接舍掉小数位的方法），把非整数坐标转换成整数，好，那么按照四舍五入的方法就得到坐标（1，0），完整的运算过程就是这样的：(1*0.75,0*0.75)=&gt;(0.75,0)=&gt;(1,0) 那么就可以再填一个象素到目标矩阵中了，同样是把源图中坐标为(1,0)处的像素值38填入目标图中的坐标。<br />　　依次填完每个象素，一幅放大后的图像就诞生了，像素矩阵如下所示：<br />　　234     38     22     22  <br />　　67      44     12     12  <br />　　89      65     63     63  <br />　　89      65     63     63  <br />　　这种放大图像的方法叫做最临近插值算法，这是一种最基本、最简单的图像缩放算法，效果也是最不好的，放大后的图像有很严重的马赛克，缩小后的图像有很严重的失真；效果不好的根源就是其简单的最临近插值方法引入了严重的图像失真，比如，当由目标图的坐标反推得到的源图的的坐标是一个浮点数的时候，采用了四舍五入的方法，直接采用了和这个浮点数最接近的象素的值，这种方法是很不科学的，当推得坐标值为 0.75的时候，不应该就简单的取为1，既然是0.75，比1要小0.25 ，比0要大0.75 ,那么目标象素值其实应该根据这个源图中虚拟的点四周的四个真实的点来按照一定的规律计算出来的，这样才能达到更好的缩放效果。<br />　　双线型内插值算法就是一种比较好的图像缩放算法，它充分的利用了源图中虚拟点四周的四个真实存在的像素值来共同决定目标图中的一个像素值，因此缩放效果比简单的最邻近插值要好很多。<br />双线性内插值算法描述如下:<br />　　对于一个目的像素，设置坐标通过反向变换得到的浮点坐标为(i+u,j+v) (其中i、j均为浮点坐标的整数部分，u、v为浮点坐标的小数部分，是取值[0,1)区间的浮点数)，则这个像素得值 f(i+u,j+v) 可由原图像中坐标为 (i,j)、(i+1,j)、(i,j+1)、(i+1,j+1)所对应的周围四个像素的值决定，即：f(i+u,j+v) = (1-u)(1-v)f(i,j) + (1-u)vf(i,j+1) + u(1-v)f(i+1,j) + uvf(i+1,j+1)                          <br />其中f(i,j)表示源图像(i,j)处的的像素值，以此类推。<br />　　比如，象刚才的例子，现在假如目标图的象素坐标为（1，1），那么反推得到的对应于源图的坐标是（0.75 , 0.75）, 这其实只是一个概念上的虚拟象素,实际在源图中并不存在这样一个象素,那么目标图的象素（1，1）的取值不能够由这个虚拟象素来决定，而只能由源图的这四个象素共同决定：（0，0）（0，1）（1，0）（1，1），而由于（0.75,0.75）离（1，1）要更近一些，那么（1,1）所起的决定作用更大一些，这从公式1中的系数uv=0.75&times;0.75就可以体现出来，而（0.75,0.75）离（0，0）最远，所以（0，0）所起的决定作用就要小一些，公式中系数为(1-u)(1-v)=0.25&times;0.25也体现出了这一特点。<br /><span style="font-size: 16px;"><strong>2，计算方法</strong></span></p>
+<p>　　<img src="https://images2015.cnblogs.com/blog/579000/201603/579000-20160321191151370-1993343880.png" alt="" /></p>
+<p>　　首先，在X方向上进行两次线性插值计算，然后在Y方向上进行一次插值计算。<br />　　<img src="https://images2015.cnblogs.com/blog/579000/201603/579000-20160321191303776-917539538.png" alt="" /></p>
+<p>　　<img src="https://images2015.cnblogs.com/blog/579000/201603/579000-20160321191339479-385352048.png" alt="" /></p>
+<p>　　在图像处理的时候，我们先根据<br />　　srcX=dstX* (srcWidth/dstWidth) ,<br />　　srcY = dstY * (srcHeight/dstHeight)<br />来计算目标像素在源图像中的位置，这里计算的srcX和srcY一般都是浮点数，比如f（1.2, 3.4）这个像素点是虚拟存在的，先找到与它临近的四个实际存在的像素点<br />　　（1，3）  （2，3）<br />　　（1，4）  （2，4）<br />　　写成f(i+u,j+v)的形式，则u=0.2,v=0.4, i=1, j=3<br />　　在沿着X方向差插值时，f(R<sub>1</sub>)=u(f(Q<sub>21</sub>)-f(Q<sub>11</sub>))+f(Q<sub>11</sub>)<br />　　沿着Y方向同理计算。<br />　　或者，直接整理一步计算，f(i+u,j+v) = (1-u)(1-v)f(i,j) + (1-u)vf(i,j+1) + u(1-v)f(i+1,j) + uvf(i+1,j+1) 。<br /><strong><span style="font-size: 16px;">3，加速以及优化策略</span></strong><br />　　单纯按照上文实现的插值算法只能勉强完成插值的功能，速度和效果都不会理想，在具体代码实现的时候有些小技巧。参考OpenCV源码以及网上博客整理如下两点：</p>
+<ul>
+<li><strong><span style="color: #ff0000;">源图像和目标图像几何中心的对齐。</span></strong></li>
+<li><strong><span style="color: #ff0000;">将浮点运算转换成整数运算</span></strong></li>
+
+
+
+</ul>
+<p><strong>3.1 源图像和目标图像几何中心的对齐　　</strong></p>
+<p>　　方法：在计算源图像的虚拟浮点坐标的时候，一般情况：<br />　　srcX=dstX* (srcWidth/dstWidth) ,<br />　　srcY = dstY * (srcHeight/dstHeight)<br />　　中心对齐(OpenCV也是如此)：<br />　　<strong><span style="color: #ff0000;">SrcX=(dstX+0.5)* (srcWidth/dstWidth) -0.5</span></strong><br /><strong><span style="color: #ff0000;">　　SrcY=(dstY+0.5) * (srcHeight/dstHeight)-0.5</span></strong><br /><strong>　　原理：</strong></p>
+<p>&nbsp; &nbsp; &nbsp;&nbsp;<a href="http://handspeaker.iteye.com/blog/1545126" target="_blank">双线性插值算法及需要注意事项</a>这篇博客解释说&ldquo;如果选择右上角为原点（0，0），那么最右边和最下边的像素实际上并没有参与计算，而且目标图像的每个像素点计算出的灰度值也相对于源图像偏左偏上。&rdquo;我有点保持疑问。<br />　　将公式变形，srcX=dstX* (srcWidth/dstWidth)+0.5*(srcWidth/dstWidth-1)<br />　　相当于我们在原始的浮点坐标上加上了0.5*(srcWidth/dstWidth-1)这样一个控制因子，这项的符号可正可负，与srcWidth/dstWidth的比值也就是当前插值是扩大还是缩小图像有关，有什么作用呢？看一个例子：假设源图像是3*3，中心点坐标（1，1）目标图像是9*9，中心点坐标（4，4），我们在进行插值映射的时候，尽可能希望均匀的用到源图像的像素信息，最直观的就是（4,4）映射到（1,1）现在直接计算srcX=4*3/9=1.3333！=1，也就是我们在插值的时候所利用的像素集中在图像的右下方，而不是均匀分布整个图像。现在考虑中心点对齐，srcX=(4+0.5)*3/9-0.5=1，刚好满足我们的要求。<br /><strong>3.2 将浮点运算转换成整数运算</strong><br />　　参考<a id="cb_post_title_url" class="postTitle2" href="http://www.cnblogs.com/Imageshop/archive/2011/11/12/2246808.html">图像处理界双线性插值算法的优化</a><br />　　直接进行计算的话，由于计算的srcX和srcY 都是浮点数，后续会进行大量的乘法，而图像数据量又大，速度不会理想，解决思路是：<strong><span style="color: #ff0000;">浮点运算&rarr;&rarr;整数运算&rarr;&rarr;&rdquo;&lt;&lt;左右移按位运算&rdquo;</span></strong>。<br />　　放大的主要对象是u，v这些浮点数，OpenCV选择的放大倍数是2048&ldquo;如何取这个合适的放大倍数呢，要从三个方面考虑，第一：精度问题，如果这个数取得过小，那么经过计算后可能会导致结果出现较大的误差。第二，这个数不能太大，太大会导致计算过程超过长整形所能表达的范围。第三：速度考虑。假如放大倍数取为12，那么算式在最后的结果中应该需要除以12*12=144，但是如果取为16，则最后的除数为16*16=256，这个数字好，我们可以用右移来实现，而右移要比普通的整除快多了。&rdquo;我们利用左移11位操作就可以达到放大目的。<br /><span style="font-size: 16px;"><strong>4，代码</strong></span></p>
+<p>　　</p>
+<div class="cnblogs_code">
+<pre>    uchar* dataDst =<span style="color: #000000;"> matDst1.data;
+    </span><span style="color: #0000ff;">int</span> stepDst =<span style="color: #000000;"> matDst1.step;
+    uchar</span>* dataSrc =<span style="color: #000000;"> matSrc.data;
+    </span><span style="color: #0000ff;">int</span> stepSrc =<span style="color: #000000;"> matSrc.step;
+    </span><span style="color: #0000ff;">int</span> iWidthSrc =<span style="color: #000000;"> matSrc.cols;
+    </span><span style="color: #0000ff;">int</span> iHiehgtSrc =<span style="color: #000000;"> matSrc.rows;
+
+    </span><span style="color: #0000ff;">for</span> (<span style="color: #0000ff;">int</span> j = <span style="color: #800080;">0</span>; j &lt; matDst1.rows; ++<span style="color: #000000;">j)
+    {
+        </span><span style="color: #0000ff;">float</span> fy = (<span style="color: #0000ff;">float</span>)((j + <span style="color: #800080;">0.5</span>) * scale_y - <span style="color: #800080;">0.5</span><span style="color: #000000;">);
+        </span><span style="color: #0000ff;">int</span> sy =<span style="color: #000000;"> cvFloor(fy);
+        fy </span>-=<span style="color: #000000;"> sy;
+        sy </span>= std::min(sy, iHiehgtSrc - <span style="color: #800080;">2</span><span style="color: #000000;">);
+        sy </span>= std::max(<span style="color: #800080;">0</span><span style="color: #000000;">, sy);
+
+        </span><span style="color: #0000ff;">short</span> cbufy[<span style="color: #800080;">2</span><span style="color: #000000;">];
+        cbufy[</span><span style="color: #800080;">0</span>] = cv::saturate_cast&lt;<span style="color: #0000ff;">short</span>&gt;((<span style="color: #800080;">1</span>.f - fy) * <span style="color: #800080;">2048</span><span style="color: #000000;">);
+        cbufy[</span><span style="color: #800080;">1</span>] = <span style="color: #800080;">2048</span> - cbufy[<span style="color: #800080;">0</span><span style="color: #000000;">];
+
+        </span><span style="color: #0000ff;">for</span> (<span style="color: #0000ff;">int</span> i = <span style="color: #800080;">0</span>; i &lt; matDst1.cols; ++<span style="color: #000000;">i)
+        {
+            </span><span style="color: #0000ff;">float</span> fx = (<span style="color: #0000ff;">float</span>)((i + <span style="color: #800080;">0.5</span>) * scale_x - <span style="color: #800080;">0.5</span><span style="color: #000000;">);
+            </span><span style="color: #0000ff;">int</span> sx =<span style="color: #000000;"> cvFloor(fx);
+            fx </span>-=<span style="color: #000000;"> sx;
+
+            </span><span style="color: #0000ff;">if</span> (sx &lt; <span style="color: #800080;">0</span><span style="color: #000000;">) {
+                fx </span>= <span style="color: #800080;">0</span>, sx = <span style="color: #800080;">0</span><span style="color: #000000;">;
+            }
+            </span><span style="color: #0000ff;">if</span> (sx &gt;= iWidthSrc - <span style="color: #800080;">1</span><span style="color: #000000;">) {
+                fx </span>= <span style="color: #800080;">0</span>, sx = iWidthSrc - <span style="color: #800080;">2</span><span style="color: #000000;">;
+            }
+
+            </span><span style="color: #0000ff;">short</span> cbufx[<span style="color: #800080;">2</span><span style="color: #000000;">];
+            cbufx[</span><span style="color: #800080;">0</span>] = cv::saturate_cast&lt;<span style="color: #0000ff;">short</span>&gt;((<span style="color: #800080;">1</span>.f - fx) * <span style="color: #800080;">2048</span><span style="color: #000000;">);
+            cbufx[</span><span style="color: #800080;">1</span>] = <span style="color: #800080;">2048</span> - cbufx[<span style="color: #800080;">0</span><span style="color: #000000;">];
+
+            </span><span style="color: #0000ff;">for</span> (<span style="color: #0000ff;">int</span> k = <span style="color: #800080;">0</span>; k &lt; matSrc.channels(); ++<span style="color: #000000;">k)
+            {
+                </span>*(dataDst+ j*stepDst + <span style="color: #800080;">3</span>*i + k) = (*(dataSrc + sy*stepSrc + <span style="color: #800080;">3</span>*sx + k) * cbufx[<span style="color: #800080;">0</span>] * cbufy[<span style="color: #800080;">0</span>] + 
+                    *(dataSrc + (sy+<span style="color: #800080;">1</span>)*stepSrc + <span style="color: #800080;">3</span>*sx + k) * cbufx[<span style="color: #800080;">0</span>] * cbufy[<span style="color: #800080;">1</span>] + 
+                    *(dataSrc + sy*stepSrc + <span style="color: #800080;">3</span>*(sx+<span style="color: #800080;">1</span>) + k) * cbufx[<span style="color: #800080;">1</span>] * cbufy[<span style="color: #800080;">0</span>] + 
+                    *(dataSrc + (sy+<span style="color: #800080;">1</span>)*stepSrc + <span style="color: #800080;">3</span>*(sx+<span style="color: #800080;">1</span>) + k) * cbufx[<span style="color: #800080;">1</span>] * cbufy[<span style="color: #800080;">1</span>]) &gt;&gt; <span style="color: #800080;">22</span><span style="color: #000000;">;
+            }
+        }
+    }
+    cv::imwrite(</span><span style="color: #800000;">"</span><span style="color: #800000;">linear_1.jpg</span><span style="color: #800000;">"</span><span style="color: #000000;">, matDst1);
+
+    cv::resize(matSrc, matDst2, matDst1.size(), </span><span style="color: #800080;">0</span>, <span style="color: #800080;">0</span>, <span style="color: #800080;">1</span><span style="color: #000000;">);
+    cv::imwrite(</span><span style="color: #800000;">"</span><span style="color: #800000;">linear_2.jpg</span><span style="color: #800000;">"</span>, matDst2);</pre>
+</div>
+<p>&nbsp;参考：<a href="http://blog.csdn.net/fengbingchun/article/details/17335477">OpenCV中resize函数五种插值算法的实现过程</a></p>
+<p><span class="ico ico_type_Repost"><span class="ico ico_type_Repost">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</span></span><span class="link_title" style="font-size: 14px;"><a href="http://blog.csdn.net/andrew659/article/details/4818988">图像放缩中最近邻插值和双线性插值的基本原理</a></span></p>
+</div>
+<div id="MySignature"></div>
+<div class="clear"></div>
+<div id="blog_post_info_block">
+    <div id="blog_post_info"></div>
+    <div class="clear"></div>
+    <div id="post_next_prev"></div>
+</div>
+            </div>
+            <div class="postDesc">posted @ 
+<span id="post-date">2016-03-21 19:09</span>&nbsp;
+<a href="https://www.cnblogs.com/yssongest/">Mr.Easy</a>&nbsp;
+阅读(<span id="post_view_count">...</span>)&nbsp;
+评论(<span id="post_comment_count">...</span>)&nbsp;
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=5303151" rel="nofollow">编辑</a>&nbsp;
+<a href="javascript:void(0)" onclick="AddToWz(5303151);return false;">收藏</a></div>
+        </div>
+	    
+	    
+    </div><!--end: topics 文章、评论容器-->
+</div>
+<script src="https://common.cnblogs.com/highlight/9.12.0/highlight.min.js"></script>
+<script>markdown_highlight();</script>
+<script>
+    var allowComments = true, cb_blogId = 167706, cb_blogApp = 'yssongest', cb_blogUserGuid = 'd966b4fd-3d44-e311-8d02-90b11c0b17d6';
+    var cb_entryId = 5303151, cb_entryCreatedDate = '2016-03-21 19:09', cb_postType = 1; 
+    loadViewCount(cb_entryId);
+</script><a name="!comments"></a>
+<div id="blog-comments-placeholder"></div>
+<script>
+    var commentManager = new blogCommentManager();
+    commentManager.renderComments(0);
+</script>
+
+<div id="comment_form" class="commentform">
+    <a name="commentform"></a>
+    <div id="divCommentShow"></div>
+    <div id="comment_nav"><span id="span_refresh_tips"></span><a href="javascript:void(0);" onclick="return RefreshCommentList();" id="lnk_RefreshComments" runat="server" clientidmode="Static">刷新评论</a><a href="#" onclick="return RefreshPage();">刷新页面</a><a href="#top">返回顶部</a></div>
+    <div id="comment_form_container"></div>
+    <div class="ad_text_commentbox" id="ad_text_under_commentbox"></div>
+    <div id="ad_t2"></div>
+    <div id="opt_under_post"></div>
+    <script async="async" src="https://www.googletagservices.com/tag/js/gpt.js"></script>
+    <script>
+        var googletag = googletag || {};
+        googletag.cmd = googletag.cmd || [];
+    </script>
+    <script>
+        googletag.cmd.push(function () {
+            googletag.defineSlot("/1090369/C1", [300, 250], "div-gpt-ad-1546353474406-0").addService(googletag.pubads());
+            googletag.defineSlot("/1090369/C2", [468, 60], "div-gpt-ad-1539008685004-0").addService(googletag.pubads());
+            googletag.pubads().enableSingleRequest();
+            googletag.enableServices();
+        });
+    </script>
+    <div id="cnblogs_c1" class="c_ad_block">
+        <div id="div-gpt-ad-1546353474406-0" style="height:250px; width:300px;"></div>
+    </div>
+    <div id="under_post_news"></div>
+    <div id="cnblogs_c2" class="c_ad_block">
+        <div id="div-gpt-ad-1539008685004-0" style="height:60px; width:468px;">
+            <script>
+                if (new Date() >= new Date(2018, 9, 13)) {
+                    googletag.cmd.push(function () { googletag.display("div-gpt-ad-1539008685004-0"); });
+                }
+            </script>
+        </div>
+    </div>
+    <div id="under_post_kb"></div>
+    <div id="HistoryToday" class="c_ad_block"></div>
+    <script type="text/javascript">
+        fixPostBody();
+        setTimeout(function () { incrementViewCount(cb_entryId); }, 50);
+        deliverAdT2();
+        deliverAdC1();
+        deliverAdC2();
+        loadNewsAndKb();
+        loadBlogSignature();
+LoadPostCategoriesTags(cb_blogId, cb_entryId);        LoadPostInfoBlock(cb_blogId, cb_entryId, cb_blogApp, cb_blogUserGuid);
+        GetPrevNextPost(cb_entryId, cb_blogId, cb_entryCreatedDate, cb_postType);
+        loadOptUnderPost();
+        GetHistoryToday(cb_blogId, cb_blogApp, cb_entryCreatedDate);
+    </script>
+</div>
+	</div><!--end: forFlow -->
+	</div><!--end: mainContent 主体内容容器-->
+
+	<div id="sideBar">
+		<div id="sideBarMain">
+			
+<div id="sidebar_news" class="newsItem">
+            <script>loadBlogNews();</script>
+</div>
+
+			<div id="blog-calendar" style="display:none"></div><script>loadBlogDefaultCalendar();</script>
+			
+			<div id="leftcontentcontainer">
+				<div id="blog-sidecolumn"></div>
+                    <script>loadBlogSideColumn();</script>
+			</div>
+			
+		</div><!--end: sideBarMain -->
+	</div><!--end: sideBar 侧边栏容器 -->
+	<div class="clear"></div>
+	</div><!--end: main -->
+	<div class="clear"></div>
+	<div id="footer">
+		<!--done-->
+Copyright &copy; 2020 Mr.Easy
+<br /><span id="poweredby">Powered by .NET Core 3.1.0 on Linux</span>
+
+
+
+	</div><!--end: footer -->
+</div><!--end: home 自定义的最大容器 -->
+
+
+    
+</body>
+</html>
