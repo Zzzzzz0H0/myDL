@@ -1,0 +1,102 @@
+﻿resnet结构解析：
+
+1. 都分为5个layer，图片尺寸变化
+预处理-> maxPool -> layer1 -> layer2 -> layer3 -> layer4
+224 -> 112 -> 56 -> 28 -> 14 -> 7
+
+2. 层数深度变化
+18 -> 34 -> 51 -> 101 -> 152
+18 = 2 + 2 * 2 + 2 * 2 + 2 * 2 + 2 * 2 (2, 2, 2, 2) 每个block有2层
+34 = 2 + 2 * 3 + 2 * 4 + 2 * 6 + 2 * 3 (3, 4, 6, 3) 每个block有2层
+51 = 2 + 3 * 3 + 3 * 4 + 3 * 6 + 3 * 3 (3, 4, 6, 3) 每个block有3层
+101 = 2 + 3 * 3 + 3 * 4 + 3 * 23 + 3 * 3 (3，4，23，3）每个block有3层
+152 = 2 + 3 * 3 + 3 * 8 + 3 * 36 + 3 * 3 (3, 8, 36, 3)每个block有3层
+
+3.channel变化
+预处理-> maxPool -> layer1 -> layer2 -> layer3 -> layer4
+18:  64 -> 64 -> 64 -> 128 -> 256 -> 512
+34:  64 -> 64 -> 64 -> 128 -> 256 -> 512
+51:  64 -> 64 -> 256 -> 512 -> 1024 -> 2048
+
+18层结构解析：
+18 = 2 + 4 * 2 * 2：
+预先处理: 一个64*7*7 卷积层, padding=3, stride=2,输出图片：64 * 112 * 112 （不是整除，每种结构都一致，都需要做）
+layer1:
+   输入图片：64 * 112 * 112
+      一个3*3 max Poor层，padding=3, stride=2,图片尺寸：64 * 56 * 56（不是整除），记为X。
+   block1:
+      第一个卷积层： 3 * 3 * 64 ，pading=1, stride=1 ,channel不变，feachor map不变， 图片尺寸： 64 * 56 * 56
+      第二个卷积层： 3 * 3 * 64 ，pading=1, stride=1, channel不变，feachor map不变， 图片尺寸： 64 * 56 * 56
+      残差处理：加上X（图片尺寸一致，不需要downsample）
+   block2:
+      同block1
+输出图片64 * 56 * 56
+
+layer2:
+   block1:
+      输入图片：64 * 56 * 56，记为X
+      第一个卷积层： 3 * 3 * 128 ，pading=1, stride=2 ,channel翻倍，feacher map减半， 图片尺寸： 128 * 28 * 28
+      第二个卷积层： 3 * 3 * 64 ，pading=1, stride=1, channel不变，feacher map不变， 图片尺寸： 128 * 28 * 28
+      残差处理：1 * 1 * 128 ，pading=1， stride=2， channel翻倍，feacher map不变，得到 128 * 28 * 28 加上X
+      输出图片：128 * 28 * 28
+   block2(和block相比，第一个卷积层不需要尺寸减半):
+      输入图片：128 * 28 * 28，记为X
+      第一个卷积层： 3 * 3 * 128 ，pading=1, stride=1 ,channel，feacher mape减半， 图片尺寸： 128 * 28 * 28
+      第二个卷积层： 3 * 3 * 64 ，pading=1, stride=1, channel不变，feacher map不变， 图片尺寸： 128 * 28 * 28
+      残差处理：1 * 1 * 128 ，pading=1， stride=1， channel不变，feacher map不变，得到 128 * 28 * 28 加上X
+      输出图片:128 * 28 * 28
+
+layer3:
+   处理同layer2
+   输入图片：128 * 28 * 28
+   输出图片：256 * 14 * 14
+
+layer4:
+   处理同layer2
+   输入图片：256 * 14 * 14
+   输出图片：512 * 7 * 7
+
+全连接层。
+
+51层结构解析：
+
+预先处理: 一个64*7*7 卷积层, padding=3, stride=2,输出图片：64 * 112 * 112 （不是整除，每种结构都一致，都需要做）
+layer1:
+ 输入图片：64 * 112 * 112
+      一个3*3 max Poor层，padding=3, stride=2,图片尺寸：64 * 56 * 56（不是整除），记为X。
+
+   block1:
+      输入图片： 64 * 56 * 56， 记为X。
+      卷积层1:   1 * 1 * 56, stride=1, channel不变，feacher不变，图片尺寸 64 * 56 * 56
+      卷积层2:  3 * 3 * 56， stride=1,pading=1， channel不变，feacher不变，图片尺寸 64 * 56 * 56
+      卷积层3:  1 * 1 * 256， stride=1, channel不变，feacher不变，图片尺寸 256 * 56 * 56
+      残差处理： 1 * 1 * 256， stride=1，得到 256 * 56 * 56 加上X
+      输出图片： 256 * 56 * 56
+
+   block2:同block1
+   block3:同block2
+
+layer2:
+   block1:
+      输入图片： 256 * 56 * 56， 记为X。
+      卷积层1:  128 * 1 * 1, stride=2, channel减半，feacher不变，图片尺寸 128 * 56 * 56
+      卷积层2:  3 * 3 * 128， stride=2,pading=1， channel不变，feacher减半，图片尺寸 128  * 28 * 28
+      卷积层3:  1 * 1 * 512， stride=1, channel变4倍，feacher不变，图片尺寸 512 * 28 * 28
+      残差处理： 1 * 1 * 512， stride=2，得到 512 * 28 * 28 加上X
+      输出图片： 512* 28 * 28
+
+   block2（和block1区别在于图片尺寸已经减半，卷积层2不需要stride，）:
+      输入图片： 512 * 28 * 28， 记为X
+      卷积层1:  128 * 1 * 1, stride=1, channel变1/4，feacher不变，图片尺寸 256 * 56 * 56
+      卷积层2:  3 * 3 * 256， stride=1,pading=1， channel不变，feacher不变，图片尺寸 128  * 28 * 28
+      卷积层3:  1 * 1 * 512， stride=1, channel变4倍，feacher不变，图片尺寸 512 * 28 * 28
+      残差处理： 1 * 1 * 512， stride=1，得到 512 * 28 * 28 加上X
+      输出图片： 512* 28 * 28
+   block3:同block2
+   block4:同block2
+
+basicblock 和bottleneck总结：
+basicblock有2层，bottleneck有3层，层与层参数数目一样。
+basicblock都是3 * 3， bottleneck 中间那层是3 * 3，channel一致，两边2层都是1 * 1，channel差4倍
+bottleneck的第一个1* 1卷积用来缩小channel，第三个1*1卷积用来扩大channel，第二个卷积在layer1中不减少图片尺寸，
+   在其他layer的第一个block中会用来减少尺寸。
