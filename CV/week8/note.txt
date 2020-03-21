@@ -1,0 +1,57 @@
+项目1知识点回顾
+（1）转置卷积，kernel_size=2n, stride=n，实现2倍上采样
+     fcn 网络分为分类网络和上采样网络2部分，分类网络使用预训练的参数初始化，而上采样网络使用双线性插值进行权重初始化？
+
+（2）双线性插值和转置卷积在进行上采样时的区别
+     双线性插值不需要学习参数，而转置卷积需要学习参数
+
+（3）转置卷积和膨胀卷积的区别，分别被那些网络使用(fcn,unet,deeplab)
+     转置卷积是对输入图像进行操作，进行上采样，撑开了input（fcn，unet）
+     deeplab的对kernel进行的处理，撑开了kernel（deeplab）
+
+
+（4）FCN使用小kernel 3*3 代替大kernel的原因
+     感受野相同的情况下减少参数，增加非线性的能力
+
+（5）FCN实现的时候第一层padding=100，为什么，有什么弊端
+      因为分类网络有个kernel是7*7,需要保证input有一定的大小，根据计算input要大于192，所以padding为100
+      弊端：无效值比较多
+
+（6）pytorch中实现转置卷积的api
+      torch.nn.ConvTranspose2d(in_channles,out_channels, kernel_size, stride, padding, output_padding, bias=True)
+    的outputpadding是什么，什么时候使用，作用
+    使用转置卷积时，同样的input和stride，输出图像可能不一致
+    输出图像的padding，在stride大于2的时候使用，作用保证输出图像一致为input * stride
+
+
+（7）Unet中实现了什么问题，resnet的出现是为了解决什么问题？
+      网络越深效果变差的问题  
+
+（8）reset的残差block，需要加x，加x的时候需要relu，是先relu，再加x，还是先加x，再relu，理由
+      先加x再relu，Relu放在后面没有意义（卷积过程就是kern之后进行relu）
+
+（9）全局平均池化的作用
+      获取全局性特征
+
+（10）resnet18和resnet101的最大区别， resnet 50layer和50以上layer区别
+     50以下3*3,3*3,50以上1*1再3*3最后1*1,作用是减少参数
+
+
+（11）reset卷积没有使用bias=false，为什么
+       后面跟了bn层，加了bias没有意义,同时也可以减少参数
+
+（12）fcn和unet的区别，那种padding？特征融合？
+       same卷积，减少边界污染，区别fcn融合方式是add，unet的cat
+
+（13）Deetlab的贡献，引入了什么技术
+       v1映入了膨胀卷积，v2多尺度融合，v3结合了aspp和encode和decode
+
+（14）dense prediction为什么不用same padding，为什么先下采样再上采样
+      感受野的问题，一直是大分辨率的话，无法感受全局信息，空洞卷积再不改变尺寸的情况下增加感受野
+
+（15）如何让fcn实现任意输入
+
+    （1）全连接变成卷积，使用全卷积网络 （1）使用空间金字塔池化（spp）讲变化输入为固定输出
+
+（16）fcn的三大贡献
+       全卷积化，上采样，skip-architec ture
