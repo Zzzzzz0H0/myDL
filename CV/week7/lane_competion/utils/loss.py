@@ -11,6 +11,11 @@ class MySoftmaxCrossEntropyLoss(nn.Module):
         self.nbclasses = nbclasses
 
     def forward(self, inputs, target):
+        # view 相当于reshape，但是不修改tensor的内存，只修改shape参数
+        # transpose 对指定的dim进行转换
+        # 转换后内存中的数据不是已经不是按照行/列顺序排列的了
+        # 可以contiguous函数可以重新排列内存中的数据
+        # 或者直接reshape数据
         if inputs.dim() > 2:
             inputs = inputs.view(inputs.size(0), inputs.size(1), -1)  # N,C,H,W => N,C,H*W
             inputs = inputs.transpose(1, 2)  # N,C,H*W => N,H*W,C
