@@ -16,7 +16,8 @@ from config import Config
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 device_list = [0]
-train_net = 'deeplabv3p'
+#  train_net = 'deeplabv3p'
+train_net = 'unet'
 nets = {'deeplabv3p': DeeplabV3Plus, 'unet': ResNetUNet}
 
 
@@ -100,9 +101,11 @@ def main():
     # set up dataset
     # 'pin_memory'意味着生成的Tensor数据最开始是属于内存中的索页，这样的话转到GPU的显存就会很快
     kwargs = {'num_workers': 4, 'pin_memory': True} if torch.cuda.is_available() else {}
+    # 对训练集进行数据增强，对验证集不需要数据增强
     train_dataset = LaneDataset("train.csv", transform=transforms.Compose([ImageAug(), DeformAug(),
                                                                               ScaleAug(), CutOut(32, 0.5), ToTensor()]))
 
+    # batch size 至少为２，否则报value error
     train_data_batch = DataLoader(train_dataset, batch_size=2*len(device_list), shuffle=True, drop_last=True, **kwargs)
     val_dataset = LaneDataset("val.csv", transform=transforms.Compose([ToTensor()]))
 
@@ -128,7 +131,6 @@ def main():
     trainF.close()
     testF.close()
     torch.save({'state_dict': net.state_dict()}, os.path.join(os.getcwd(), lane_config.SAVE_PATH, "finalNet.pth.tar"))
-
 
 if __name__ == "__main__":
     main()

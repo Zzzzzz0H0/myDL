@@ -8,6 +8,8 @@ def encode_labels(color_mask):
     id_train = {0:[0, 249, 255, 213, 206, 207, 211, 208,216,215,218, 219,232, 202, 231,230,228,229,233,212,223],
                 1:[200, 204, 209], 2: [201,203], 3:[217], 4:[210], 5:[214],
                 6:[220,221,222,224,225,226], 7:[205,227,250]}
+
+    # 将每个label值转换成train id，总共有8类
     for i in range(8):
         for item in id_train[i]:
             encode_mask[color_mask == item] = i
@@ -16,6 +18,7 @@ def encode_labels(color_mask):
 
 
 def decode_labels(labels):
+    # 将train id 转换为灰度label，输出
     deocde_mask = np.zeros((labels.shape[0], labels.shape[1]), dtype='uint8')
     # 0
     deocde_mask[labels == 0] = 0
@@ -38,6 +41,7 @@ def decode_labels(labels):
 
 
 def decode_color_labels(labels):
+    # 将train id装换为彩色label，输出彩色图像
     decode_mask = np.zeros((3, labels.shape[0], labels.shape[1]), dtype='uint8')
     # 0
     decode_mask[0][labels == 0] = 0

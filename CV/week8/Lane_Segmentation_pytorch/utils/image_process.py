@@ -19,6 +19,8 @@ def crop_resize_data(image, label=None, image_size=(1024, 384), offset=690):
     h,w, c = image.shape
     cv2.resize(image,(w,h))
     """
+    # 裁掉图像上方690个像素，然后resize成1024*384，采用的是双线性插值
+    # 注意：输入图像是np的array，为h，w，c，resize参数为w，h
     roi_image = image[offset:, :]
     if label is not None:
         roi_label = label[offset:, :]
@@ -29,7 +31,7 @@ def crop_resize_data(image, label=None, image_size=(1024, 384), offset=690):
         train_image = cv2.resize(roi_image, image_size, interpolation=cv2.INTER_LINEAR)
         return train_image
 
-
+# 自定义的dataset
 class LaneDataset(Dataset):
 
     def __init__(self, csv_file, transform=None):
@@ -38,20 +40,24 @@ class LaneDataset(Dataset):
                                   names=["image",
                                          "label"])
         # self.rare_data = pd.read_csv(os.path.join(os.getcwd(), "data_list", rare_file))
+        # values 是一个series
         self.images = self.data["image"].values
         self.labels = self.data["label"].values
 
         self.transform = transform
 
     def __len__(self):
+        # 重载len()函数，返回的是图片label的数量
         return self.labels.shape[0]
 
     def __getitem__(self, idx):
 
+        # 重载[]运算
         ori_image = cv2.imread(self.images[idx])
+        # label为灰度图像
         ori_mask = cv2.imread(self.labels[idx], cv2.IMREAD_GRAYSCALE)
         train_img, train_mask = crop_resize_data(ori_image, ori_mask)
-        # Encode
+        # Encode, 将实际label转换为train id
         train_mask = encode_labels(train_mask)
         sample = [train_img.copy(), train_mask.copy()]
         if self.transform:
@@ -59,7 +65,7 @@ class LaneDataset(Dataset):
         return sample
 
 
-# pixel augmentation
+# pixel augmentation,增加高斯噪声
 class ImageAug(object):
     def __call__(self, sample):
         image, mask = sample
@@ -136,11 +142,12 @@ class CutOut(object):
 
 class ToTensor(object):
     def __call__(self, sample):
-
+        #将图片的h,w,c转为c，h，w
         image, mask = sample
         image = np.transpose(image,(2,0,1))
         image = image.astype(np.float32)
         mask = mask.astype(np.long)
+        # 转换为torch.tensor，是不可修改的
         return {'image': torch.from_numpy(image.copy()),
                 'mask': torch.from_numpy(mask.copy())}
 

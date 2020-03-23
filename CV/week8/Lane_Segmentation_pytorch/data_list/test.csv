@@ -1,4 +1,3 @@
-image,label
 /home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Image/road03/Record006/Camera 6/171206_030334300_Camera_6.jpg,/home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Label/Label_road03/Label/Record006/Camera 6/171206_030334300_Camera_6_bin.png
 /home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Image/road04/Record004/Camera 6/171206_054610166_Camera_6.jpg,/home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Label/Label_road04/Label/Record004/Camera 6/171206_054610166_Camera_6_bin.png
 /home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Image/road02/Record001/Camera 5/170927_063841202_Camera_5.jpg,/home/zhuheng/workspace/myDL/CV/week8/LaneSeg/Label/Label_road02/Label/Record001/Camera 5/170927_063841202_Camera_5_bin.png
