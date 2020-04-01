@@ -22,6 +22,7 @@ class MySoftmaxCrossEntropyLoss(nn.Module):
             inputs = inputs.transpose(1, 2)  # N,C,H*W => N,H*W,C
             inputs = inputs.contiguous().view(-1, self.nbclasses)  # N,H*W,C => N*H*W,C
         target = target.view(-1)
+        # mean表示计算每一类的交叉熵loss
         return nn.CrossEntropyLoss(reduction="mean")(inputs, target)
 
 
