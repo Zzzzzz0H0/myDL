@@ -31,6 +31,7 @@ class ResBlock(nn.Module):
 
     def forward(self, x):
         # 这里用的是bn->relu->conv,目前看和Block没有区别，因为该层的输出是下层的输入
+        # 残差处理时，没有使用relu，是为了构造更深的网络
         out = self.conv1(self.relu1(self.bn1(x)))
         return out
 
