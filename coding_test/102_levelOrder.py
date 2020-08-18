@@ -19,7 +19,7 @@ class Solution:
         dfs(root, 0)
         return list(result.values())
 
-    def levelOrder(self, root: TreeNode) -> List[List[int]]:
+    def levelOrder2(self, root: TreeNode) -> List[List[int]]:
         # nfs: 广度优先搜索
         result = []
         def nfs(queue):
@@ -38,6 +38,19 @@ class Solution:
         nfs(deque([root]))
         return result
 
+    def levelOrder(self, root: TreeNode) -> List[List[int]]:
+        # 广度优先搜索，不使用deque（只在大量数据的2端插入删除时有效）
+        # result保存所有节点的value
+        # nodes为每一层的节点
+        result = []
+        def nfs(nodes):
+            while(nodes):
+                # 更新result
+                result.append([n.val for node in nodes for n in node if n])
+                # 更新nodes
+                nodes = [(n.left, n.right) for node in nodes for n in node if n]
+        nfs([(root,)])
+        return result[:-1]
 
 s = Solution()
 root = gen_root()
